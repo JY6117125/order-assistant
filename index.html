@@ -1,17 +1,17 @@
 <!DOCTYPE html>
 <html lang="zh-HK">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <title>Order Assistant V1.2 Fast</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <title>Order Assistant V1.3 Ultra Fast</title>
 
   <style>
     * { box-sizing: border-box; }
     body {
       margin: 0;
-      padding: 18px;
+      padding: 16px;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
       background: #f5f5f7;
       color: #111;
@@ -22,12 +22,12 @@
       margin: 0 auto;
       background: #fff;
       border-radius: 22px;
-      padding: 22px;
-      box-shadow: 0 6px 25px rgba(0,0,0,.08);
+      padding: 20px;
+      box-shadow: 0 6px 24px rgba(0,0,0,.08);
     }
-    h1 { margin: 0 0 4px; font-size: 27px; }
+    h1 { margin: 0 0 5px; font-size: 26px; }
     .sub { color: #666; margin-bottom: 18px; }
-    label { display: block; margin: 15px 0 7px; font-weight: 700; }
+    label { display: block; margin: 14px 0 7px; font-weight: 700; }
     input[type="number"], input[type="file"] {
       width: 100%;
       padding: 13px;
@@ -38,53 +38,57 @@
     }
     button {
       width: 100%;
-      margin-top: 16px;
-      padding: 15px;
+      margin-top: 15px;
+      padding: 14px;
       border: 0;
       border-radius: 13px;
       background: #111;
       color: #fff;
-      font-size: 18px;
+      font-size: 17px;
       font-weight: 800;
+    }
+    button.secondary {
+      background: #e9e9ed;
+      color: #111;
     }
     button:disabled { opacity: .45; }
     #preview {
       display: none;
       width: 100%;
-      max-height: 420px;
+      max-height: 360px;
       object-fit: contain;
-      margin-top: 16px;
-      border-radius: 13px;
+      margin-top: 14px;
+      border-radius: 12px;
       background: #eee;
     }
     .status {
-      margin-top: 14px;
-      padding: 12px;
+      margin-top: 13px;
+      padding: 11px;
       border-radius: 11px;
       background: #f2f2f4;
       color: #555;
       font-size: 14px;
-      white-space: pre-wrap;
       line-height: 1.45;
+      white-space: pre-wrap;
     }
     .progress {
       display: none;
-      height: 8px;
-      margin-top: 12px;
+      height: 7px;
+      margin-top: 11px;
       background: #ddd;
       border-radius: 999px;
       overflow: hidden;
     }
     #bar {
-      height: 100%;
       width: 0%;
+      height: 100%;
       background: #111;
       transition: width .15s ease;
     }
     .result {
       display: none;
       margin-top: 18px;
-      padding: 18px;
+      padding: 17px;
       border-radius: 16px;
       background: #f2f2f4;
     }
@@ -97,8 +101,13 @@
     .bad { color: #c62828; }
     .row { padding: 5px 0; font-size: 17px; }
     .big { font-weight: 800; }
-    .muted { color: #777; font-size: 12px; margin-top: 14px; }
-    details { margin-top: 16px; }
+    .note {
+      margin-top: 12px;
+      font-size: 13px;
+      color: #666;
+      line-height: 1.45;
+    }
+    details { margin-top: 15px; }
     pre {
       white-space: pre-wrap;
       word-break: break-word;
@@ -110,39 +119,43 @@
     }
   </style>
 </head>
-<body>
 
+<body>
 <div class="card">
-  <h1>Order Assistant V1.2</h1>
-  <div class="sub">快速 OCR：先掃訂單區，失敗才掃全圖</div>
+
+  <h1>Order Assistant V1.3</h1>
+  <div class="sub">Ultra Fast：只掃訂單區 + 預設加 2 分鐘等客時間</div>
 
   <label for="threshold">最低接受時薪 ($/hr)</label>
-  <input id="threshold" type="number" inputmode="decimal" value="30" min="0" step="1" />
+  <input id="threshold" type="number" inputmode="decimal" value="30" min="0" step="1">
 
   <label for="imageInput">選擇 Uber / Mubo 訂單截圖</label>
-  <input id="imageInput" type="file" accept="image/*" />
+  <input id="imageInput" type="file" accept="image/*">
 
-  <img id="preview" alt="訂單截圖預覽" />
+  <img id="preview" alt="訂單截圖">
 
-  <button id="analyzeBtn" disabled>重新分析</button>
+  <button id="analyzeBtn" disabled>快速重新分析</button>
+  <button id="fullScanBtn" class="secondary" disabled>讀不到時才用：完整掃描</button>
 
   <div class="progress" id="progress"><div id="bar"></div></div>
-
-  <div class="status" id="status">正在載入 OCR…</div>
+  <div class="status" id="status">正在準備 OCR…</div>
 
   <div class="result" id="result">
     <div id="decision" class="decision"></div>
 
     <div class="row">💰 總價：<span id="price" class="big">—</span></div>
-    <div class="row">🚗 去接客時間：<span id="pickupTime" class="big">—</span> 分鐘</div>
-    <div class="row">🧍 行程時間：<span id="tripTime" class="big">—</span> 分鐘</div>
-    <div class="row">⏱ 總時間：<span id="totalTime" class="big">—</span> 分鐘</div>
+    <div class="row">🚗 去接客：<span id="pickupTime" class="big">—</span> 分鐘</div>
+    <div class="row">🧍 行程：<span id="tripTime" class="big">—</span> 分鐘</div>
+    <div class="row">⌛ 等客時間：<span class="big">2</span> 分鐘</div>
+    <div class="row">⏱ 計算總時間：<span id="totalTime" class="big">—</span> 分鐘</div>
     <div class="row">💵 預計時薪：<span id="hourly" class="big">—</span></div>
+
     <div class="row">📍 去接客距離：<span id="pickupDistance" class="big">—</span></div>
     <div class="row">🛣 行程距離：<span id="tripDistance" class="big">—</span></div>
     <div class="row">🚘 總距離：<span id="totalDistance" class="big">—</span></div>
     <div class="row">💲 每英里：<span id="perMile" class="big">—</span></div>
-    <div class="row">⚡ 分析時間：<span id="elapsed" class="big">—</span></div>
+
+    <div class="row">⚡ 本次分析：<span id="elapsed" class="big">—</span></div>
 
     <details>
       <summary>查看 OCR 原文</summary>
@@ -150,17 +163,23 @@
     </details>
   </div>
 
-  <div class="muted">
-    V1.2 會先裁剪圖片並縮小尺寸，只讀訂單常見區域；如果資料不足，才自動用全圖再試一次。
+  <div class="note">
+    計算公式：價格 ÷ ((去接客時間 + 行程時間 + 2 分鐘等客) ÷ 60)。
+    快速模式不會自動掃整張圖，避免浪費時間；只有讀不到時才按「完整掃描」。
   </div>
+
 </div>
 
 <script>
 "use strict";
 
+const WAIT_MINUTES = 2;
+const FAST_MAX_WIDTH = 620;
+
 const imageInput = document.getElementById("imageInput");
 const preview = document.getElementById("preview");
 const analyzeBtn = document.getElementById("analyzeBtn");
+const fullScanBtn = document.getElementById("fullScanBtn");
 const thresholdInput = document.getElementById("threshold");
 const statusBox = document.getElementById("status");
 const progress = document.getElementById("progress");
@@ -204,9 +223,10 @@ async function loadTesseract() {
       await loadScript(src);
       if (window.Tesseract) {
         ocrReady = true;
-        statusBox.textContent = "✅ OCR 已載入。請選擇截圖。";
-        updateButton();
-        warmUpWorker();
+        statusBox.textContent = "✅ OCR 已載入，正在預熱…";
+        updateButtons();
+        await ensureWorker();
+        if (!selectedFile) statusBox.textContent = "✅ 已準備好。選擇截圖後會自動快速分析。";
         return;
       }
     } catch (e) {
@@ -215,22 +235,7 @@ async function loadTesseract() {
   }
 
   statusBox.textContent =
-    "❌ OCR 無法載入。\n請確認有網路，而且用 Safari / HTTPS 網頁開啟。";
-}
-
-function updateButton() {
-  analyzeBtn.disabled = !selectedFile || !ocrReady || busy;
-}
-
-async function warmUpWorker() {
-  try {
-    await ensureWorker();
-    if (!selectedFile && !busy) {
-      statusBox.textContent = "✅ OCR 已準備好。選擇截圖後會自動分析。";
-    }
-  } catch (e) {
-    console.warn("Worker 預載失敗", e);
-  }
+    "❌ OCR 無法載入。\n請確認有網路，並用 Safari / HTTPS 網頁開啟。";
 }
 
 function logger(m) {
@@ -244,71 +249,68 @@ async function ensureWorker() {
   if (worker) return worker;
   if (!window.Tesseract) throw new Error("Tesseract 尚未載入。");
 
-  statusBox.textContent = "正在初始化 OCR…";
-  progress.style.display = "block";
-  bar.style.width = "5%";
-
   worker = await window.Tesseract.createWorker("eng", 1, { logger });
 
-  // Sparse text：適合 App 截圖上分散的文字
   await worker.setParameters({
     tessedit_pageseg_mode: "11",
-    preserve_interword_spaces: "1"
+    preserve_interword_spaces: "1",
+    tessedit_char_whitelist:
+      "0123456789.$,abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ "
   });
 
   return worker;
+}
+
+function updateButtons() {
+  const disabled = !selectedFile || !ocrReady || busy;
+  analyzeBtn.disabled = disabled;
+  fullScanBtn.disabled = disabled;
 }
 
 function fileToImage(file) {
   return new Promise((resolve, reject) => {
     const img = new Image();
     const url = URL.createObjectURL(file);
+
     img.onload = () => {
       URL.revokeObjectURL(url);
       resolve(img);
     };
+
     img.onerror = () => reject(new Error("無法讀取圖片。"));
     img.src = url;
   });
 }
 
-function makeFastCrop(img, fullImage = false) {
-  // 第一輪只讀中下方 78%：通常訂單卡、時間、距離、價錢都在這範圍。
-  // 若第一輪資料不足，第二輪會自動讀全圖。
-  const cropX = 0;
-  const cropY = fullImage ? 0 : Math.floor(img.naturalHeight * 0.22);
-  const cropW = img.naturalWidth;
-  const cropH = fullImage
-    ? img.naturalHeight
-    : img.naturalHeight - cropY;
+function makeCrop(img, fullScan) {
+  let cropX = 0;
+  let cropY = 0;
+  let cropW = img.naturalWidth;
+  let cropH = img.naturalHeight;
 
-  // 大幅減少 OCR 像素量
-  const MAX_WIDTH = 900;
-  const scale = Math.min(1, MAX_WIDTH / cropW);
+  if (!fullScan) {
+    /*
+      Uber / 類似訂單畫面通常重要資料集中在中下區域。
+      快速模式只掃下方約 62%，減少 OCR 像素。
+    */
+    cropY = Math.floor(img.naturalHeight * 0.38);
+    cropH = img.naturalHeight - cropY;
+  }
+
+  const maxWidth = fullScan ? 760 : FAST_MAX_WIDTH;
+  const scale = Math.min(1, maxWidth / cropW);
 
   const canvas = document.createElement("canvas");
   canvas.width = Math.max(1, Math.round(cropW * scale));
   canvas.height = Math.max(1, Math.round(cropH * scale));
 
-  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  const ctx = canvas.getContext("2d");
   ctx.drawImage(
     img,
     cropX, cropY, cropW, cropH,
     0, 0, canvas.width, canvas.height
   );
 
-  // 輕量灰階 + 對比，改善白字/黑底及地圖 UI 的辨識
-  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-  const d = imageData.data;
-
-  for (let i = 0; i < d.length; i += 4) {
-    const gray = Math.round(0.299 * d[i] + 0.587 * d[i+1] + 0.114 * d[i+2]);
-    // 溫和對比
-    const v = Math.max(0, Math.min(255, (gray - 128) * 1.25 + 128));
-    d[i] = d[i+1] = d[i+2] = v;
-  }
-
-  ctx.putImageData(imageData, 0, 0);
   return canvas;
 }
 
@@ -325,14 +327,13 @@ function extractOrderData(text) {
 
   let price = null;
 
-  const dollarPrice = [...t.matchAll(/\$\s*([0-9]{1,3}(?:[.,][0-9]{1,2})?)/g)];
-  if (dollarPrice.length) {
-    price = parseFloat(dollarPrice[0][1].replace(",", "."));
+  const dollarMatch = t.match(/\$\s*([0-9]{1,3}(?:[.,][0-9]{1,2})?)/);
+  if (dollarMatch) {
+    price = parseFloat(dollarMatch[1].replace(",", "."));
   } else {
-    // OCR 偶爾把 $ 認成 S
-    const sPrice = t.match(/\b[Ss]\s*([0-9]{1,3}[.,][0-9]{2})\b/);
-    if (sPrice) {
-      price = parseFloat(sPrice[1].replace(",", "."));
+    const sMatch = t.match(/\b[Ss]\s*([0-9]{1,3}[.,][0-9]{2})\b/);
+    if (sMatch) {
+      price = parseFloat(sMatch[1].replace(",", "."));
     } else {
       const fallback = t.match(/\b([0-9]{1,3}[.,][0-9]{2})\b/);
       if (fallback) price = parseFloat(fallback[1].replace(",", "."));
@@ -354,34 +355,35 @@ function extractOrderData(text) {
   return { price, times, distances };
 }
 
-function hasEnoughData(data) {
-  return data.price !== null && data.times.length >= 2;
-}
-
 function render(data, rawText, startedAt) {
-  if (!hasEnoughData(data)) {
+  if (data.price === null || data.times.length < 2) {
+    document.getElementById("ocrText").textContent = rawText;
+    resultBox.style.display = "block";
     throw new Error(
-      "仍然讀不到完整價錢 + 兩段時間。請展開 OCR 原文並把內容貼給我。"
+      "快速模式讀不到完整「價格 + 兩段時間」。請按下面的「完整掃描」。"
     );
   }
 
   const pickupTime = data.times[0];
   const tripTime = data.times[1];
-  const totalTime = pickupTime + tripTime;
-  const hourly = data.price / (totalTime / 60);
 
+  // 使用者要求：固定加 2 分鐘等客時間
+  const totalTime = pickupTime + tripTime + WAIT_MINUTES;
+
+  const hourly = data.price / (totalTime / 60);
   const threshold = parseFloat(thresholdInput.value) || 0;
   const shouldAccept = hourly >= threshold;
 
   const pickupDistance = data.distances.length >= 1 ? data.distances[0] : null;
   const tripDistance = data.distances.length >= 2 ? data.distances[1] : null;
+
   const totalDistance =
     pickupDistance !== null && tripDistance !== null
       ? pickupDistance + tripDistance
       : null;
 
   const perMile =
-    totalDistance && totalDistance > 0
+    totalDistance !== null && totalDistance > 0
       ? data.price / totalDistance
       : null;
 
@@ -415,86 +417,80 @@ function render(data, rawText, startedAt) {
   resultBox.style.display = "block";
 }
 
-async function analyzeOrder() {
+async function analyzeOrder(fullScan = false) {
   if (!selectedFile || busy) return;
 
   busy = true;
-  updateButton();
+  updateButtons();
   resultBox.style.display = "none";
   progress.style.display = "block";
-  bar.style.width = "2%";
+  bar.style.width = "3%";
 
   const startedAt = performance.now();
 
   try {
+    statusBox.textContent = fullScan
+      ? "正在完整掃描…"
+      : "⚡ 正在快速掃描訂單區…";
+
     const img = await fileToImage(selectedFile);
+    const canvas = makeCrop(img, fullScan);
     const w = await ensureWorker();
 
-    // 1) 快速模式：裁剪 + 縮小
-    statusBox.textContent = "⚡ 快速掃描訂單區…";
-    const fastCanvas = makeFastCrop(img, false);
-    let recognition = await w.recognize(fastCanvas);
-    let rawText = recognition.data.text || "";
-    let data = extractOrderData(rawText);
-
-    // 2) 如果資料不足，自動 fallback 全圖
-    if (!hasEnoughData(data)) {
-      statusBox.textContent = "快速掃描資料不足，正在用全圖再試一次…";
-      bar.style.width = "10%";
-
-      const fullCanvas = makeFastCrop(img, true);
-      recognition = await w.recognize(fullCanvas);
-      rawText = recognition.data.text || "";
-      data = extractOrderData(rawText);
-    }
+    const recognition = await w.recognize(canvas);
+    const rawText = recognition.data.text || "";
+    const data = extractOrderData(rawText);
 
     render(data, rawText, startedAt);
+
     bar.style.width = "100%";
-    statusBox.textContent = "✅ 分析完成。";
+    statusBox.textContent = fullScan
+      ? "✅ 完整掃描完成。"
+      : "✅ 快速分析完成。";
 
   } catch (e) {
     console.error(e);
-    statusBox.textContent = "❌ 分析失敗：\n" + e.message;
+    statusBox.textContent = "❌ " + e.message;
   } finally {
     busy = false;
-    updateButton();
+    updateButtons();
 
     setTimeout(() => {
       progress.style.display = "none";
       bar.style.width = "0%";
-    }, 900);
+    }, 700);
   }
 }
 
 imageInput.addEventListener("change", async () => {
-  selectedFile = imageInput.files && imageInput.files[0]
-    ? imageInput.files[0]
-    : null;
+  selectedFile =
+    imageInput.files && imageInput.files[0]
+      ? imageInput.files[0]
+      : null;
 
   if (!selectedFile) {
     preview.style.display = "none";
-    updateButton();
+    updateButtons();
     return;
   }
 
   preview.src = URL.createObjectURL(selectedFile);
   preview.style.display = "block";
   resultBox.style.display = "none";
-  updateButton();
+  updateButtons();
 
   if (ocrReady) {
-    statusBox.textContent = "截圖已選擇，正在自動分析…";
-    await analyzeOrder();
+    await analyzeOrder(false);
   } else {
-    statusBox.textContent = "截圖已選擇，等 OCR 準備好後再按「重新分析」。";
+    statusBox.textContent = "截圖已選擇，OCR 準備完成後可按「快速重新分析」。";
   }
 });
 
-analyzeBtn.addEventListener("click", analyzeOrder);
+analyzeBtn.addEventListener("click", () => analyzeOrder(false));
+fullScanBtn.addEventListener("click", () => analyzeOrder(true));
 
-// 啟動
 loadTesseract();
-
 </script>
+
 </body>
 </html>
