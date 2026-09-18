@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <title>Order Assistant V1.3 Ultra Fast</title>
+  <title>Order Assistant V1.4 Ultra Fast</title>
 
   <style>
     * { box-sizing: border-box; }
@@ -123,7 +123,7 @@
 <body>
 <div class="card">
 
-  <h1>Order Assistant V1.3</h1>
+  <h1>Order Assistant V1.4</h1>
   <div class="sub">Ultra Fast：只掃訂單區 + 預設加 2 分鐘等客時間</div>
 
   <label for="threshold">最低接受時薪 ($/hr)</label>
@@ -139,6 +139,10 @@
 
   <div class="progress" id="progress"><div id="bar"></div></div>
   <div class="status" id="status">正在準備 OCR…</div>
+
+  <div class="status" id="liveTimer" style="display:none;">
+    ⏱ 已分析：0.0 秒
+  </div>
 
   <div class="result" id="result">
     <div id="decision" class="decision"></div>
@@ -185,11 +189,39 @@ const statusBox = document.getElementById("status");
 const progress = document.getElementById("progress");
 const bar = document.getElementById("bar");
 const resultBox = document.getElementById("result");
+const liveTimer = document.getElementById("liveTimer");
 
 let selectedFile = null;
 let worker = null;
 let ocrReady = false;
 let busy = false;
+
+let analysisTimerId = null;
+let analysisTimerStart = 0;
+
+function startAnalysisTimer() {
+  analysisTimerStart = performance.now();
+  liveTimer.style.display = "block";
+  liveTimer.textContent = "⏱ 已分析：0.0 秒";
+
+  if (analysisTimerId) clearInterval(analysisTimerId);
+
+  analysisTimerId = setInterval(() => {
+    const seconds = (performance.now() - analysisTimerStart) / 1000;
+    liveTimer.textContent = "⏱ 已分析：" + seconds.toFixed(1) + " 秒";
+  }, 100);
+}
+
+function stopAnalysisTimer() {
+  if (analysisTimerId) {
+    clearInterval(analysisTimerId);
+    analysisTimerId = null;
+  }
+
+  const seconds = (performance.now() - analysisTimerStart) / 1000;
+  liveTimer.textContent = "✅ 分析用時：" + seconds.toFixed(1) + " 秒";
+  return seconds;
+}
 
 const savedThreshold = localStorage.getItem("orderAssistantThreshold");
 if (savedThreshold !== null) thresholdInput.value = savedThreshold;
@@ -427,6 +459,7 @@ async function analyzeOrder(fullScan = false) {
   bar.style.width = "3%";
 
   const startedAt = performance.now();
+  startAnalysisTimer();
 
   try {
     statusBox.textContent = fullScan
@@ -444,12 +477,24 @@ async function analyzeOrder(fullScan = false) {
     render(data, rawText, startedAt);
 
     bar.style.width = "100%";
+
+    const finalSeconds = stopAnalysisTimer();
+    document.getElementById("elapsed").textContent =
+      finalSeconds.toFixed(1) + " 秒";
+
     statusBox.textContent = fullScan
       ? "✅ 完整掃描完成。"
       : "✅ 快速分析完成。";
 
   } catch (e) {
     console.error(e);
+
+    if (analysisTimerId) {
+      const finalSeconds = stopAnalysisTimer();
+      document.getElementById("elapsed").textContent =
+        finalSeconds.toFixed(1) + " 秒";
+    }
+
     statusBox.textContent = "❌ " + e.message;
   } finally {
     busy = false;
