@@ -1,1 +1,1582 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
 
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+  >
+
+  <meta
+    name="apple-mobile-web-app-capable"
+    content="yes"
+  >
+
+  <meta
+    name="apple-mobile-web-app-status-bar-style"
+    content="default"
+  >
+
+  <title>Order Assistant V1.1</title>
+
+  <style>
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 18px;
+
+      font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        Arial,
+        sans-serif;
+
+      background: #f5f5f7;
+      color: #111;
+    }
+
+
+    .card {
+      width: 100%;
+      max-width: 540px;
+
+      margin: 0 auto;
+
+      background: #fff;
+
+      border-radius: 22px;
+
+      padding: 22px;
+
+      box-shadow:
+        0 6px 25px
+        rgba(0, 0, 0, 0.08);
+    }
+
+
+    h1 {
+      margin: 0 0 5px 0;
+
+      font-size: 27px;
+    }
+
+
+    .subtitle {
+      color: #666;
+
+      font-size: 15px;
+
+      margin-bottom: 22px;
+    }
+
+
+    label {
+      display: block;
+
+      margin-top: 16px;
+      margin-bottom: 7px;
+
+      font-weight: 700;
+    }
+
+
+    input {
+      width: 100%;
+
+      padding: 13px;
+
+      font-size: 17px;
+
+      border:
+        1px solid #ccc;
+
+      border-radius: 12px;
+
+      background: #fff;
+    }
+
+
+    button {
+      width: 100%;
+
+      margin-top: 18px;
+
+      padding: 15px;
+
+      border: 0;
+
+      border-radius: 13px;
+
+      background: #111;
+
+      color: white;
+
+      font-size: 18px;
+
+      font-weight: 800;
+    }
+
+
+    button:disabled {
+      opacity: 0.45;
+    }
+
+
+    #preview {
+      display: none;
+
+      width: 100%;
+
+      max-height: 500px;
+
+      object-fit: contain;
+
+      margin-top: 18px;
+
+      border-radius: 13px;
+
+      background: #eee;
+    }
+
+
+    .status {
+      margin-top: 15px;
+
+      padding: 12px;
+
+      border-radius: 11px;
+
+      background: #f2f2f4;
+
+      color: #555;
+
+      font-size: 14px;
+
+      line-height: 1.45;
+
+      white-space: pre-wrap;
+    }
+
+
+    .result {
+      display: none;
+
+      margin-top: 20px;
+
+      padding: 18px;
+
+      border-radius: 16px;
+
+      background: #f2f2f4;
+    }
+
+
+    .decision {
+      font-size: 31px;
+
+      font-weight: 900;
+
+      margin-bottom: 17px;
+    }
+
+
+    .good {
+      color: #15803d;
+    }
+
+
+    .bad {
+      color: #c62828;
+    }
+
+
+    .row {
+      padding: 6px 0;
+
+      font-size: 17px;
+    }
+
+
+    .big-number {
+      font-weight: 800;
+    }
+
+
+    .progress-wrap {
+      display: none;
+
+      width: 100%;
+
+      height: 8px;
+
+      margin-top: 13px;
+
+      background: #ddd;
+
+      border-radius: 100px;
+
+      overflow: hidden;
+    }
+
+
+    #progressBar {
+      width: 0%;
+
+      height: 100%;
+
+      background: #111;
+
+      transition:
+        width 0.2s ease;
+    }
+
+
+    details {
+      margin-top: 18px;
+    }
+
+
+    summary {
+      cursor: pointer;
+
+      font-weight: 600;
+    }
+
+
+    pre {
+      white-space: pre-wrap;
+      word-break: break-word;
+
+      padding: 10px;
+
+      background: white;
+
+      border-radius: 10px;
+
+      font-size: 12px;
+
+      color: #555;
+    }
+
+
+    .small {
+      margin-top: 17px;
+
+      color: #777;
+
+      font-size: 12px;
+
+      line-height: 1.45;
+    }
+
+  </style>
+</head>
+
+
+<body>
+
+<div class="card">
+
+  <h1>
+    Order Assistant V1.1
+  </h1>
+
+
+  <div class="subtitle">
+    訂單截圖 → OCR → 自動計算 → 接 / 不接
+  </div>
+
+
+
+  <label for="threshold">
+    最低接受時薪 ($/hr)
+  </label>
+
+
+  <input
+    id="threshold"
+    type="number"
+    inputmode="decimal"
+    value="30"
+    min="0"
+    step="1"
+  >
+
+
+
+  <label for="imageInput">
+    選擇 Uber / Mubo 訂單截圖
+  </label>
+
+
+  <input
+    id="imageInput"
+    type="file"
+    accept="image/*"
+  >
+
+
+
+  <img
+    id="preview"
+    alt="訂單截圖"
+  >
+
+
+
+  <button
+    id="analyzeBtn"
+    disabled
+  >
+    分析訂單
+  </button>
+
+
+
+  <div
+    id="progressWrap"
+    class="progress-wrap"
+  >
+    <div id="progressBar"></div>
+  </div>
+
+
+
+  <div
+    id="status"
+    class="status"
+  >
+    正在檢查 OCR 系統……
+  </div>
+
+
+
+  <div
+    id="result"
+    class="result"
+  >
+
+
+    <div
+      id="decision"
+      class="decision"
+    >
+    </div>
+
+
+
+    <div class="row">
+
+      💰 總價：
+
+      <span
+        id="price"
+        class="big-number"
+      >
+        —
+      </span>
+
+    </div>
+
+
+
+    <div class="row">
+
+      🚗 去接客時間：
+
+      <span
+        id="pickupTime"
+        class="big-number"
+      >
+        —
+      </span>
+
+      分鐘
+
+    </div>
+
+
+
+    <div class="row">
+
+      🧍 客人行程：
+
+      <span
+        id="tripTime"
+        class="big-number"
+      >
+        —
+      </span>
+
+      分鐘
+
+    </div>
+
+
+
+    <div class="row">
+
+      ⏱ 總時間：
+
+      <span
+        id="totalTime"
+        class="big-number"
+      >
+        —
+      </span>
+
+      分鐘
+
+    </div>
+
+
+
+    <div class="row">
+
+      💵 預計時薪：
+
+      <span
+        id="hourly"
+        class="big-number"
+      >
+        —
+      </span>
+
+    </div>
+
+
+
+    <div class="row">
+
+      📍 去接客距離：
+
+      <span
+        id="pickupDistance"
+        class="big-number"
+      >
+        —
+      </span>
+
+    </div>
+
+
+
+    <div class="row">
+
+      🛣 客人行程距離：
+
+      <span
+        id="tripDistance"
+        class="big-number"
+      >
+        —
+      </span>
+
+    </div>
+
+
+
+    <div class="row">
+
+      🚘 總距離：
+
+      <span
+        id="totalDistance"
+        class="big-number"
+      >
+        —
+      </span>
+
+    </div>
+
+
+
+    <div class="row">
+
+      💲 每英里：
+
+      <span
+        id="perMile"
+        class="big-number"
+      >
+        —
+      </span>
+
+    </div>
+
+
+
+    <details>
+
+      <summary>
+        查看 OCR 原始文字
+      </summary>
+
+      <pre id="ocrText"></pre>
+
+    </details>
+
+  </div>
+
+
+
+  <div class="small">
+
+    V1.1 會自動讀取訂單中的價格、兩段時間和距離。
+
+  </div>
+
+</div>
+
+
+
+<script>
+
+"use strict";
+
+
+/* =========================================
+   DOM
+========================================= */
+
+const imageInput =
+  document.getElementById("imageInput");
+
+
+const preview =
+  document.getElementById("preview");
+
+
+const analyzeBtn =
+  document.getElementById("analyzeBtn");
+
+
+const statusBox =
+  document.getElementById("status");
+
+
+const resultBox =
+  document.getElementById("result");
+
+
+const thresholdInput =
+  document.getElementById("threshold");
+
+
+const progressWrap =
+  document.getElementById("progressWrap");
+
+
+const progressBar =
+  document.getElementById("progressBar");
+
+
+
+let selectedFile = null;
+
+let ocrWorker = null;
+
+let ocrReady = false;
+
+
+
+/* =========================================
+   保存最低時薪
+========================================= */
+
+const savedThreshold =
+  localStorage.getItem(
+    "orderAssistantThreshold"
+  );
+
+
+if (savedThreshold !== null) {
+
+  thresholdInput.value =
+    savedThreshold;
+
+}
+
+
+
+thresholdInput.addEventListener(
+  "change",
+  function () {
+
+    localStorage.setItem(
+      "orderAssistantThreshold",
+      thresholdInput.value
+    );
+
+  }
+);
+
+
+
+/* =========================================
+   動態載入 JavaScript
+========================================= */
+
+function loadScript(url) {
+
+  return new Promise(
+    function (resolve, reject) {
+
+      const script =
+        document.createElement("script");
+
+
+      script.src = url;
+
+      script.async = true;
+
+
+      script.onload =
+        function () {
+
+          resolve();
+
+        };
+
+
+      script.onerror =
+        function () {
+
+          script.remove();
+
+          reject(
+            new Error(
+              "無法載入：" + url
+            )
+          );
+
+        };
+
+
+      document.head.appendChild(
+        script
+      );
+
+    }
+  );
+
+}
+
+
+
+/* =========================================
+   載入 Tesseract OCR
+
+   第一個 CDN：
+   jsDelivr
+
+   第二個 CDN：
+   unpkg
+
+========================================= */
+
+async function loadTesseract() {
+
+
+  statusBox.textContent =
+    "正在載入 OCR 系統……";
+
+
+
+  const sources = [
+
+    "https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js",
+
+    "https://unpkg.com/tesseract.js@5/dist/tesseract.min.js"
+
+  ];
+
+
+
+  for (const source of sources) {
+
+
+    try {
+
+
+      await loadScript(source);
+
+
+
+      if (
+        typeof window.Tesseract !==
+        "undefined"
+      ) {
+
+
+        ocrReady = true;
+
+
+        statusBox.textContent =
+          "✅ OCR 系統已準備好。\n請選擇訂單截圖。";
+
+
+        updateAnalyzeButton();
+
+
+        return;
+
+      }
+
+
+    } catch (error) {
+
+
+      console.warn(
+        "CDN 載入失敗",
+        source,
+        error
+      );
+
+
+    }
+
+  }
+
+
+
+  ocrReady = false;
+
+
+  statusBox.textContent =
+    "❌ OCR 程式未能載入。\n\n" +
+
+    "如果你現在是在 iPhone「檔案」App 直接預覽 HTML，請改用 Safari 開啟網頁版本。\n\n" +
+
+    "另外請確認 iPhone 有網路連線。";
+
+
+  updateAnalyzeButton();
+
+}
+
+
+
+/* =========================================
+   更新按鈕狀態
+========================================= */
+
+function updateAnalyzeButton() {
+
+
+  analyzeBtn.disabled =
+    !selectedFile ||
+    !ocrReady;
+
+}
+
+
+
+/* =========================================
+   選擇截圖
+========================================= */
+
+imageInput.addEventListener(
+  "change",
+  function () {
+
+
+    selectedFile =
+      imageInput.files &&
+      imageInput.files[0]
+        ? imageInput.files[0]
+        : null;
+
+
+
+    if (!selectedFile) {
+
+
+      preview.style.display =
+        "none";
+
+
+      resultBox.style.display =
+        "none";
+
+
+      updateAnalyzeButton();
+
+
+      return;
+
+    }
+
+
+
+    preview.src =
+      URL.createObjectURL(
+        selectedFile
+      );
+
+
+    preview.style.display =
+      "block";
+
+
+    resultBox.style.display =
+      "none";
+
+
+    if (ocrReady) {
+
+
+      statusBox.textContent =
+        "✅ 截圖已選擇。\n按「分析訂單」。";
+
+
+    } else {
+
+
+      statusBox.textContent =
+        "截圖已選擇，但 OCR 系統尚未準備好。";
+
+    }
+
+
+    updateAnalyzeButton();
+
+  }
+);
+
+
+
+/* =========================================
+   OCR progress
+========================================= */
+
+function updateProgress(message) {
+
+
+  if (
+    typeof message.progress ===
+    "number"
+  ) {
+
+
+    progressWrap.style.display =
+      "block";
+
+
+    const percent =
+      Math.round(
+        message.progress * 100
+      );
+
+
+    progressBar.style.width =
+      percent + "%";
+
+
+
+    if (
+      message.status ===
+      "recognizing text"
+    ) {
+
+
+      statusBox.textContent =
+        "正在讀取訂單文字…… " +
+        percent +
+        "%";
+
+
+    } else {
+
+
+      statusBox.textContent =
+        "OCR 準備中…… " +
+        percent +
+        "%";
+
+    }
+
+  }
+
+}
+
+
+
+/* =========================================
+   建立 OCR Worker
+========================================= */
+
+async function ensureWorker() {
+
+
+  if (ocrWorker) {
+
+    return ocrWorker;
+
+  }
+
+
+
+  if (
+    typeof window.Tesseract ===
+    "undefined"
+  ) {
+
+
+    throw new Error(
+      "Tesseract OCR 尚未載入。"
+    );
+
+  }
+
+
+
+  statusBox.textContent =
+    "正在初始化 OCR……";
+
+
+  progressWrap.style.display =
+    "block";
+
+
+  progressBar.style.width =
+    "5%";
+
+
+
+  ocrWorker =
+    await window.Tesseract.createWorker(
+
+      "eng",
+
+      1,
+
+      {
+
+        logger:
+          updateProgress
+
+      }
+
+    );
+
+
+
+  return ocrWorker;
+
+}
+
+
+
+/* =========================================
+   分析按鈕
+========================================= */
+
+analyzeBtn.addEventListener(
+  "click",
+  analyzeOrder
+);
+
+
+
+/* =========================================
+   執行 OCR + 計算
+========================================= */
+
+async function analyzeOrder() {
+
+
+  if (!selectedFile) {
+
+    return;
+
+  }
+
+
+
+  analyzeBtn.disabled =
+    true;
+
+
+  resultBox.style.display =
+    "none";
+
+
+  progressWrap.style.display =
+    "block";
+
+
+  progressBar.style.width =
+    "1%";
+
+
+  statusBox.textContent =
+    "正在準備分析……";
+
+
+
+  try {
+
+
+    const worker =
+      await ensureWorker();
+
+
+
+    const recognition =
+      await worker.recognize(
+        selectedFile
+      );
+
+
+
+    const text =
+      recognition.data.text || "";
+
+
+
+    document.getElementById(
+      "ocrText"
+    ).textContent = text;
+
+
+
+    const order =
+      extractOrderData(text);
+
+
+
+    if (
+      order.price === null
+    ) {
+
+
+      throw new Error(
+        "找不到訂單價格。OCR 原文已顯示在下面，你可以截圖畀我調整辨識規則。"
+      );
+
+    }
+
+
+
+    if (
+      order.times.length < 2
+    ) {
+
+
+      throw new Error(
+        "找不到『去接客時間』和『行程時間』兩組分鐘數。"
+      );
+
+    }
+
+
+
+    const pickupTime =
+      order.times[0];
+
+
+    const tripTime =
+      order.times[1];
+
+
+    const totalTime =
+      pickupTime +
+      tripTime;
+
+
+
+    const hourly =
+      order.price /
+      (totalTime / 60);
+
+
+
+    const threshold =
+      parseFloat(
+        thresholdInput.value
+      ) || 0;
+
+
+
+    const shouldAccept =
+      hourly >= threshold;
+
+
+
+    let pickupDistance =
+      null;
+
+
+    let tripDistance =
+      null;
+
+
+    let totalDistance =
+      null;
+
+
+    let perMile =
+      null;
+
+
+
+    if (
+      order.distances.length >= 1
+    ) {
+
+
+      pickupDistance =
+        order.distances[0];
+
+    }
+
+
+
+    if (
+      order.distances.length >= 2
+    ) {
+
+
+      tripDistance =
+        order.distances[1];
+
+    }
+
+
+
+    if (
+      pickupDistance !== null &&
+      tripDistance !== null
+    ) {
+
+
+      totalDistance =
+        pickupDistance +
+        tripDistance;
+
+
+      if (totalDistance > 0) {
+
+
+        perMile =
+          order.price /
+          totalDistance;
+
+      }
+
+    }
+
+
+
+    /* PRICE */
+
+    document.getElementById(
+      "price"
+    ).textContent =
+      "$" +
+      order.price.toFixed(2);
+
+
+
+    /* TIMES */
+
+    document.getElementById(
+      "pickupTime"
+    ).textContent =
+      pickupTime;
+
+
+
+    document.getElementById(
+      "tripTime"
+    ).textContent =
+      tripTime;
+
+
+
+    document.getElementById(
+      "totalTime"
+    ).textContent =
+      totalTime;
+
+
+
+    /* HOURLY */
+
+    document.getElementById(
+      "hourly"
+    ).textContent =
+      "$" +
+      hourly.toFixed(2) +
+      "/hr";
+
+
+
+    /* DISTANCES */
+
+    document.getElementById(
+      "pickupDistance"
+    ).textContent =
+
+      pickupDistance !== null
+
+        ? pickupDistance.toFixed(1) +
+          " mi"
+
+        : "未讀到";
+
+
+
+    document.getElementById(
+      "tripDistance"
+    ).textContent =
+
+      tripDistance !== null
+
+        ? tripDistance.toFixed(1) +
+          " mi"
+
+        : "未讀到";
+
+
+
+    document.getElementById(
+      "totalDistance"
+    ).textContent =
+
+      totalDistance !== null
+
+        ? totalDistance.toFixed(1) +
+          " mi"
+
+        : "未讀到";
+
+
+
+    document.getElementById(
+      "perMile"
+    ).textContent =
+
+      perMile !== null
+
+        ? "$" +
+          perMile.toFixed(2) +
+          "/mi"
+
+        : "未讀到";
+
+
+
+    /* DECISION */
+
+    const decision =
+      document.getElementById(
+        "decision"
+      );
+
+
+
+    if (shouldAccept) {
+
+
+      decision.textContent =
+        "✅ 可以接";
+
+
+      decision.className =
+        "decision good";
+
+
+    } else {
+
+
+      decision.textContent =
+        "❌ 不建議接";
+
+
+      decision.className =
+        "decision bad";
+
+    }
+
+
+
+    resultBox.style.display =
+      "block";
+
+
+    progressBar.style.width =
+      "100%";
+
+
+    statusBox.textContent =
+      "✅ 分析完成。";
+
+
+
+  } catch (error) {
+
+
+    console.error(error);
+
+
+    statusBox.textContent =
+      "❌ 分析失敗：\n" +
+      error.message;
+
+
+
+  } finally {
+
+
+    analyzeBtn.disabled =
+      false;
+
+
+    setTimeout(
+      function () {
+
+
+        progressWrap.style.display =
+          "none";
+
+
+        progressBar.style.width =
+          "0%";
+
+
+      },
+
+      1000
+
+    );
+
+  }
+
+}
+
+
+
+/* =========================================
+   OCR 文字解析
+========================================= */
+
+function extractOrderData(text) {
+
+
+  /*
+    將某些 OCR 常見錯誤先修正
+  */
+
+  const cleanedText =
+    text
+      .replace(/\r/g, "\n")
+      .replace(/[|]/g, "I");
+
+
+
+  /* =====================================
+     1. 價格
+
+     $5.06
+     $ 5.06
+  ===================================== */
+
+
+  const priceMatches =
+    [
+      ...cleanedText.matchAll(
+        /\$\s*(\d{1,3}(?:\.\d{1,2})?)/g
+      )
+    ];
+
+
+
+  let price = null;
+
+
+
+  if (
+    priceMatches.length > 0
+  ) {
+
+
+    price =
+      parseFloat(
+        priceMatches[0][1]
+      );
+
+
+  } else {
+
+
+    /*
+      OCR 有可能漏掉 $
+
+      fallback 只找：
+      整數 + 兩位小數
+    */
+
+
+    const fallbackPrice =
+      cleanedText.match(
+        /\b(\d{1,3}\.\d{2})\b/
+      );
+
+
+
+    if (fallbackPrice) {
+
+
+      price =
+        parseFloat(
+          fallbackPrice[1]
+        );
+
+    }
+
+  }
+
+
+
+  /* =====================================
+     2. 時間
+
+     7 min
+     6 mins
+     10 minute
+     10 minutes
+  ===================================== */
+
+
+  const timeRegex =
+    /\b(\d{1,3})\s*(?:min|mins|minute|minutes)\b/gi;
+
+
+
+  const timeMatches =
+    [
+      ...cleanedText.matchAll(
+        timeRegex
+      )
+    ];
+
+
+
+  const times =
+    timeMatches
+
+      .map(
+        function (match) {
+
+
+          return parseInt(
+            match[1],
+            10
+          );
+
+        }
+      )
+
+      .filter(
+        function (number) {
+
+
+          return (
+            number > 0 &&
+            number <= 300
+          );
+
+        }
+      );
+
+
+
+  /* =====================================
+     3. 距離
+
+     3.4 mi
+     1.4 mi
+     3.4 miles
+  ===================================== */
+
+
+  const distanceRegex =
+    /\b(\d+(?:\.\d+)?)\s*(?:mi|mile|miles)\b/gi;
+
+
+
+  const distanceMatches =
+    [
+      ...cleanedText.matchAll(
+        distanceRegex
+      )
+    ];
+
+
+
+  const distances =
+    distanceMatches
+
+      .map(
+        function (match) {
+
+
+          return parseFloat(
+            match[1]
+          );
+
+        }
+      )
+
+      .filter(
+        function (number) {
+
+
+          return (
+            number >= 0 &&
+            number < 500
+          );
+
+        }
+      );
+
+
+
+  return {
+
+    price:
+      price,
+
+    times:
+      times,
+
+    distances:
+      distances
+
+  };
+
+}
+
+
+
+/* =========================================
+   頁面啟動
+========================================= */
+
+loadTesseract();
+
+</script>
+
+
+</body>
+
+</html>
